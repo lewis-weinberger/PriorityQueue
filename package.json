@@ -1,0 +1,15 @@
+{
+  "name":         "PriorityQueue",
+  "version":      "0.1.0",
+  "description":  "A simple min-heap priority queue addon for Io",
+  "author":       "Lewis Weinberger",
+  "website":      "https://github.com/lewis-weinberger/PriorityQueue.git",
+  "readme":       "README.md",
+  "protos":       ["PriorityQueue"],
+  "dependencies": {
+    "libs":     [],
+    "headers":  [],
+    "protos":   [],
+    "packages": []
+  }
+}
