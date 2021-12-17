@@ -15,23 +15,23 @@ An addon providing a simple min-heap priority queue.
 static const char *protoId = "PriorityQueue";
 
 IoTag *IoPriorityQueue_newTag(void *state) {
-	IoTag *tag = IoTag_newWithName_(protoId);
-	IoTag_state_(tag, state);
-	IoTag_freeFunc_(tag, (IoTagFreeFunc *)IoPriorityQueue_free);
-	IoTag_cloneFunc_(tag, (IoTagCloneFunc *)IoPriorityQueue_rawClone);
-	return tag;
+    IoTag *tag = IoTag_newWithName_(protoId);
+    IoTag_state_(tag, state);
+    IoTag_freeFunc_(tag, (IoTagFreeFunc *)IoPriorityQueue_free);
+    IoTag_cloneFunc_(tag, (IoTagCloneFunc *)IoPriorityQueue_rawClone);
+    return tag;
 }
 
 IoPriorityQueue *IoPriorityQueue_proto(void *state) {
-	IoObject *self = IoObject_new(state);
-	IoObject_tag_(self, IoPriorityQueue_newTag(state));
+    IoObject *self = IoObject_new(state);
+    IoObject_tag_(self, IoPriorityQueue_newTag(state));
 
-	IoObject_setDataPointer_(self, calloc(1, sizeof(IoPriorityQueueData)));
+    IoObject_setDataPointer_(self, calloc(1, sizeof(IoPriorityQueueData)));
     DATA(self)->heap = calloc(ALLOC_SIZE, sizeof(Node));
     DATA(self)->size = 0;
     DATA(self)->memSize = ALLOC_SIZE;
 
-	IoState_registerProtoWithId_(state, self, protoId);
+    IoState_registerProtoWithId_(state, self, protoId);
 
     {
         IoMethodTable methodTable[] = {
@@ -49,20 +49,20 @@ IoPriorityQueue *IoPriorityQueue_proto(void *state) {
 }
 
 IoPriorityQueue *IoPriorityQueue_rawClone(IoPriorityQueue *proto) {
-	IoPriorityQueue *self = IoObject_rawClonePrimitive(proto);
-	IoObject_setDataPointer_(self, cpalloc(DATA(proto), sizeof(IoPriorityQueueData)));
+    IoPriorityQueue *self = IoObject_rawClonePrimitive(proto);
+    IoObject_setDataPointer_(self, cpalloc(DATA(proto), sizeof(IoPriorityQueueData)));
     DATA(self)->heap = cpalloc(DATA(proto)->heap, DATA(proto)->memSize * sizeof(Node));
-	return self;
+    return self;
 }
 
 IoPriorityQueue *IoPriorityQueue_new(void *state) {
-	IoObject *proto = IoState_protoWithId_(state, protoId);
-	return IOCLONE(proto);
+    IoObject *proto = IoState_protoWithId_(state, protoId);
+    return IOCLONE(proto);
 }
 
 void IoPriorityQueue_free(IoPriorityQueue *self) {
     free(DATA(self)->heap);
-	free(IoObject_dataPointer(self));
+    free(IoObject_dataPointer(self));
 }
 
 
