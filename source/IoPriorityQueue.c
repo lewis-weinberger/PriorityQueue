@@ -70,7 +70,7 @@ void IoPriorityQueue_free(IoPriorityQueue *self) {
 
 
 /* Append to the heap, resizing as necessary */
-static void appendToHeap(IoPriorityQueueData *queue, int value, int priority) {
+static void appendToHeap(IoPriorityQueueData *queue, void *value, int priority) {
     if(queue->size == queue->memSize) {
         queue->memSize *= ALLOC_RESIZE;
         queue->heap = realloc(queue->heap, queue->memSize * sizeof(Node));
@@ -108,6 +108,7 @@ IO_METHOD(IoPriorityQueue, with) {
     */
 
     int maxSize = IoMessage_locals_intArgAt_(m, locals, 0);
+
     IOASSERT(maxSize > 0, "PriorityQueue with() requires a positive maxSize");
 
     IoPriorityQueue *ioPriorityQueue = IOCLONE(self);
@@ -118,21 +119,27 @@ IO_METHOD(IoPriorityQueue, with) {
 
 IO_METHOD(IoPriorityQueue, push) {
     /*doc PriorityQueue push(aValue, aPriority)
-    Push the new (integer) value onto the queue with the given (integer) priority.
+    Push the new value onto the queue with the given integer priority.
     */
     
-    int i, value, priority;
+    int i, priority;
+    IoObject *value;
+
+    IOASSERT(IoMessage_argCount(m) == 2, "PriorityQueue push() requires two arguments");
     
-    value = IoMessage_locals_intArgAt_(m, locals, 0);
+    value = IoMessage_locals_valueArgAt_(m, locals, 0);
     priority = IoMessage_locals_intArgAt_(m, locals, 1);
 
-    appendToHeap(DATA(self), value, priority);
+    appendToHeap(DATA(self), IOREF(value), priority);
     if(DATA(self)->size > 0) {
         for(i = DATA(self)->size / 2 - 1; i > -1; i--) {
             minHeapify(DATA(self), i);
         }
     }
-    return IONUMBER(value);
+
+    IoObject_isDirty_(self, 1);
+
+    return self;
 }
 
 IO_METHOD(IoPriorityQueue, pop) {
@@ -142,7 +149,7 @@ IO_METHOD(IoPriorityQueue, pop) {
     the highest "priority" is actually the lowest value.
     */
     
-    int result;
+    IoObject *result;
 
     if(DATA(self)->size == 0) {
         return IONIL(self);
@@ -150,7 +157,10 @@ IO_METHOD(IoPriorityQueue, pop) {
     result = DATA(self)->heap[0].value;
     DATA(self)->heap[0] = DATA(self)->heap[--(DATA(self)->size)];
     minHeapify(DATA(self), 0);
-    return IONUMBER(result);
+
+    IoObject_isDirty_(self, 1);
+
+    return result;
 }
 
 IO_METHOD(IoPriorityQueue, size) {

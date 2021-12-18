@@ -16,7 +16,7 @@ Create a new queue with a pre-allocated heap using `with`:
 queue := PriorityQueue with(100) # capacity for 100 elements before internal reallocation
 ```
 
-Add a new integer value with integer priority using `push`:
+Add a new value to the queue with integer priority using `push`:
 
 ```io
 value := 10
@@ -44,8 +44,8 @@ A longer example:
 queue := PriorityQueue with(5)
 
 queue push(5, 1)
-queue push(1, 4)
-queue push(4, 3)
+queue push("hello", 4)
+queue push(list(4, 4), 3)
 queue push(3, 2)
 queue push(2, 5)
 
@@ -53,8 +53,8 @@ queue size # 5
 
 queue pop # 5
 queue pop # 3
-queue pop # 4
-queue pop # 1
+queue pop # list(4, 4)
+queue pop # "hello"
 queue pop # 2
 
 queue pop # returns nil when empty

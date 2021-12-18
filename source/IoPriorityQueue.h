@@ -18,7 +18,7 @@ typedef IoObject IoPriorityQueue;
 
 typedef struct
 {
-    int value;
+    void *value;
     int priority;
 } Node;
 
