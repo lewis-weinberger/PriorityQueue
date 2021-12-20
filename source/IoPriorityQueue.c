@@ -39,6 +39,7 @@ IoPriorityQueue *IoPriorityQueue_proto(void *state) {
             {"push", IoPriorityQueue_push},
             {"pop", IoPriorityQueue_pop},
             {"size", IoPriorityQueue_size},
+            {"capacity", IoPriorityQueue_capacity},
             {NULL, NULL},
         };
         
@@ -50,8 +51,10 @@ IoPriorityQueue *IoPriorityQueue_proto(void *state) {
 
 IoPriorityQueue *IoPriorityQueue_rawClone(IoPriorityQueue *proto) {
     IoPriorityQueue *self = IoObject_rawClonePrimitive(proto);
-    IoObject_setDataPointer_(self, cpalloc(DATA(proto), sizeof(IoPriorityQueueData)));
-    DATA(self)->heap = cpalloc(DATA(proto)->heap, DATA(proto)->memSize * sizeof(Node));
+    IoObject_setDataPointer_(self, cpalloc(DATA(proto), 
+                             sizeof(IoPriorityQueueData)));
+    DATA(self)->heap = cpalloc(DATA(proto)->heap, 
+                               DATA(proto)->memSize * sizeof(Node));
     return self;
 }
 
@@ -70,35 +73,38 @@ void IoPriorityQueue_free(IoPriorityQueue *self) {
 
 
 /* Append to the heap, resizing as necessary */
-static void appendToHeap(IoPriorityQueueData *queue, void *value, int priority) {
+static void appendToHeap(IoPriorityQueueData *queue, void *v, int p) {
     if(queue->size == queue->memSize) {
         queue->memSize *= ALLOC_RESIZE;
         queue->heap = realloc(queue->heap, queue->memSize * sizeof(Node));
     }
-    queue->heap[queue->size].value = value;
-    queue->heap[queue->size++].priority = priority;
+    queue->heap[queue->size].value = v;
+    queue->heap[queue->size].priority = p;
+    queue->size++;
 }
 
 /* Heapify the queue */
 static void minHeapify(IoPriorityQueueData *queue, int index) {
     int i, min, child;
     Node tmp;
-    
-    min = index;
-    for(i = 1; i < 3; i++) {
-        child = i + 2 * index;
+   
+    if(index < queue->size) {
+        min = index;
+        for(i = 1; i < 3; i++) {
+            child = i + 2 * index;
 
-        if(child < queue->size 
-                && queue->heap[min].priority > queue->heap[child].priority) {
-            min = child;
+            if(child < queue->size && 
+               queue->heap[min].priority > queue->heap[child].priority) {
+                min = child;
+            }
         }
-    }
 
-    if(min != index) {
-        tmp = queue->heap[index];
-        queue->heap[index] = queue->heap[min];
-        queue->heap[min] = tmp;
-        minHeapify(queue, min);
+        if(min != index) {
+            tmp = queue->heap[index];
+            queue->heap[index] = queue->heap[min];
+            queue->heap[min] = tmp;
+            minHeapify(queue, min);
+        }
     }
 }
 
@@ -109,12 +115,14 @@ IO_METHOD(IoPriorityQueue, with) {
 
     int maxSize = IoMessage_locals_intArgAt_(m, locals, 0);
 
-    IOASSERT(maxSize > 0, "PriorityQueue with() requires a positive maxSize");
+    IOASSERT(maxSize > 0, 
+             "PriorityQueue with() requires a positive maxSize");
 
-    IoPriorityQueue *ioPriorityQueue = IOCLONE(self);
-    DATA(self)->memSize = maxSize;
-    DATA(self)->heap = realloc(DATA(self)->heap, maxSize * sizeof(Node));
-    return ioPriorityQueue;
+    IoPriorityQueue *new = IOCLONE(self);
+    DATA(new)->memSize = maxSize;
+    DATA(new)->heap = realloc(DATA(new)->heap, maxSize * sizeof(Node));
+    IoObject_isDirty_(new, 1);
+    return new;
 }
 
 IO_METHOD(IoPriorityQueue, push) {
@@ -125,7 +133,8 @@ IO_METHOD(IoPriorityQueue, push) {
     int i, priority;
     IoObject *value;
 
-    IOASSERT(IoMessage_argCount(m) == 2, "PriorityQueue push() requires two arguments");
+    IOASSERT(IoMessage_argCount(m) == 2, 
+             "PriorityQueue push() requires two arguments");
     
     value = IoMessage_locals_valueArgAt_(m, locals, 0);
     priority = IoMessage_locals_intArgAt_(m, locals, 1);
@@ -154,12 +163,21 @@ IO_METHOD(IoPriorityQueue, pop) {
     if(DATA(self)->size == 0) {
         return IONIL(self);
     }
+    
     result = DATA(self)->heap[0].value;
-    DATA(self)->heap[0] = DATA(self)->heap[--(DATA(self)->size)];
+    DATA(self)->size--;
+    DATA(self)->heap[0] = DATA(self)->heap[DATA(self)->size];
     minHeapify(DATA(self), 0);
-
+    
+    if(DATA(self)->memSize > ALLOC_SIZE &&
+       DATA(self)->size * 4 < DATA(self)->memSize) {
+        DATA(self)->memSize = DATA(self)->size;
+        DATA(self)->heap = realloc(DATA(self)->heap, 
+                                   DATA(self)->memSize * sizeof(Node));
+    }
+    
     IoObject_isDirty_(self, 1);
-
+    
     return result;
 }
 
@@ -169,4 +187,12 @@ IO_METHOD(IoPriorityQueue, size) {
     */
 
     return IONUMBER(DATA(self)->size);
+}
+
+IO_METHOD(IoPriorityQueue, capacity) {
+    /*doc PriorityQueue capacity
+    Returns the capacity of the queue before further internal reallocation.
+    */
+
+    return IONUMBER(DATA(self)->memSize);
 }

@@ -38,6 +38,7 @@ IoObject *IoPriorityQueue_with(IoObject *, IoObject *, IoObject *);
 IoObject *IoPriorityQueue_push(IoObject *, IoObject *, IoObject *);
 IoObject *IoPriorityQueue_pop(IoObject *, IoObject *, IoObject *);
 IoObject *IoPriorityQueue_size(IoObject *, IoObject *, IoObject *);
+IoObject *IoPriorityQueue_capacity(IoObject *, IoObject *, IoObject *);
 
 #ifdef __cplusplus
 }
