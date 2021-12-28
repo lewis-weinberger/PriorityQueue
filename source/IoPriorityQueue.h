@@ -32,6 +32,7 @@ typedef struct
 IoPriorityQueue *IoPriorityQueue_proto(void *);
 IoPriorityQueue *IoPriorityQueue_rawClone(IoPriorityQueue *);
 IoPriorityQueue *IoPriorityQueue_new(void *);
+void IoPriorityQueue_mark(IoPriorityQueue *);
 void IoPriorityQueue_free(IoPriorityQueue *);
 
 IoObject *IoPriorityQueue_with(IoObject *, IoObject *, IoObject *);

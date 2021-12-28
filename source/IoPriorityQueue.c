@@ -19,6 +19,7 @@ IoTag *IoPriorityQueue_newTag(void *state) {
     IoTag_state_(tag, state);
     IoTag_freeFunc_(tag, (IoTagFreeFunc *)IoPriorityQueue_free);
     IoTag_cloneFunc_(tag, (IoTagCloneFunc *)IoPriorityQueue_rawClone);
+    IoTag_markFunc_(tag, (IoTagMarkFunc *)IoPriorityQueue_mark);
     return tag;
 }
 
@@ -61,6 +62,14 @@ IoPriorityQueue *IoPriorityQueue_rawClone(IoPriorityQueue *proto) {
 IoPriorityQueue *IoPriorityQueue_new(void *state) {
     IoObject *proto = IoState_protoWithId_(state, protoId);
     return IOCLONE(proto);
+}
+
+void IoPriorityQueue_mark(IoPriorityQueue *self) {
+    int i;
+
+    for(i = 0; i < DATA(self)->size; i++) {
+        IoObject_shouldMark(DATA(self)->heap[i].value);
+    }
 }
 
 void IoPriorityQueue_free(IoPriorityQueue *self) {
@@ -168,13 +177,6 @@ IO_METHOD(IoPriorityQueue, pop) {
     DATA(self)->size--;
     DATA(self)->heap[0] = DATA(self)->heap[DATA(self)->size];
     minHeapify(DATA(self), 0);
-    
-    if(DATA(self)->memSize > ALLOC_SIZE &&
-       DATA(self)->size * 4 < DATA(self)->memSize) {
-        DATA(self)->memSize = DATA(self)->size;
-        DATA(self)->heap = realloc(DATA(self)->heap, 
-                                   DATA(self)->memSize * sizeof(Node));
-    }
     
     IoObject_isDirty_(self, 1);
     
